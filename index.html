@@ -4,12 +4,15 @@
   <title>ThreeJS Playground</title> 
  </head> 
  <body>
-  <div id="output"> 
+  <div id="output" style="float: left;"> 
   </div>
-  <form onSubmit="return false;">
-	<textarea id="vectors" rows="4" cols="50"></textarea><button id="addVectors">Add Vectors</button><br/>
-	<input type="text" id="findNearestTo"/><button id="find">Find Nearest Neighbour</button>
-  </form>
+  <div style="float: left;">
+        <form onSubmit="return false;">
+	        <textarea id="vectors" rows="20" cols="15"></textarea><button id="addVectors">Add Vectors</button><br/>
+                <input type="text" id="randomVectorsCount"/><button id="addRandomVectors">Add Random Vectors</button><br/>
+	        <input type="text" id="findNearestTo"/><button id="find">Find Nearest Neighbour</button>
+        </form>
+  </div>
   <script type="text/javascript" src="lib/jquery-2.0.2.min.js"></script>
   <script type="text/javascript" src="lib/three.min.js"></script> 
   <script type="text/javascript" src="lib/OrbitControls.js"></script> 
