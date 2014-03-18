@@ -30,16 +30,17 @@ $(function () {
                 removeAll();
                 var nr = $("#randomVectorsCount").val();
                 var PI2 = Math.PI * 2;
-                var material = new THREE.SpriteCanvasMaterial( {
-                        color: 0x7777ff,
-                        program: function ( context ) {
-                                context.lineWidth = 0.025;
-                                context.beginPath();
-                                context.arc( 0, 0, 0.25, 0, PI2, true );
-                                context.fill();
-                        }
-                });
+                particles = Array();
                 for(var i=0; i < nr; i++) {
+                        var material = new THREE.SpriteCanvasMaterial( {
+                                color: 0x7777ff,
+                                program: function ( context ) {
+                                        context.lineWidth = 0.025;
+                                        context.beginPath();
+                                        context.arc( 0, 0, 0.25, 0, PI2, true );
+                                        context.fill();
+                                }
+                        });
                         var px = Math.random() *40 - 20;
 			var py = Math.random() *40 -20;
 			var pz = Math.random() *40 -20;
@@ -48,13 +49,58 @@ $(function () {
                         particle.position.y = py;
                         particle.position.z = pz;
                         scene.add(particle);
+                        particles.push([px,py,pz]);
                 }
                 render();
+        });
+        $("#find").click(function() {
+                var vec = Array()
+                if (sphere) {
+                        scene.remove(sphere);
+                }
+                if (found) {
+                        scene.remove(found);
+                }
+                if (point) {
+                        point.material.color.setRGB(119, 119, 255);
+                }
+
+		var components = $("#findNearestTo").val().split('|');
+		$.each(components, function(key, cmp) {
+                        vec.push(parseFloat(cmp));
+                });
+                var p = {
+                        vectors: particles,
+                        findNearestTo: vec
+                }
+                $.post("/kdtree/ajax", JSON.stringify(p))
+                        .done(function( data ) {
+                                for (i = 0; i < scene.children.length; i++) {
+                                        if (scene.children[i] instanceof THREE.Sprite) {
+                                                point = scene.children[i];
+                                                if (point.position.x == data[0] && point.position.y == data[1] && point.position.z == data[2]) {
+                                                        point.material.color.setRGB(255,0,0);
+                                                        meshMaterial = new THREE.MeshBasicMaterial({ color: 0xFF00FF, wireframe: true });
+                                                        var d = Math.sqrt(Math.pow(data[0] - vec[0], 2) + Math.pow(data[1] - vec[1], 2) + Math.pow(data[2] - vec[2], 2));
+                                                        sphere = new THREE.Mesh( new THREE.SphereGeometry( d ), meshMaterial );
+                                                        sphere.position.set( vec[0], vec[1], vec[2] );
+                                                        scene.add( sphere );
+                                                        meshMaterial = new THREE.MeshBasicMaterial({ color: 0x00FF00 });
+                                                        found = new THREE.Mesh( new THREE.SphereGeometry( 0.25 ), meshMaterial );
+                                                        found.position.set( vec[0], vec[1], vec[2] );
+                                                        scene.add(found);
+                                                        break;
+                                                }
+                                        }
+                                }
+                                render();
+                        });
         });
 	   
 	var container;
 	var camera, controls, scene, renderer;
-	var cross;
+        var particles = Array()
+        var sphere, point, found;
 
 	init();
 	animate();
@@ -65,7 +111,18 @@ $(function () {
 		var axes = new THREE.AxisHelper( 20 );
 		scene.add(axes);
 		
-		camera = new THREE.PerspectiveCamera( 45, (window.innerWidth) / (window.innerHeight), 0.1, 1000 );
+                for( i = -2; i < 3; i++) {
+                        var helperXY = new THREE.GridHelper( 20, 10 );
+                        helperXY.rotation = new THREE.Euler( Math.PI/2, 0, 0 );
+                        helperXY.setColors( 0xCCCCCC, 0xCCCCCC );
+                        helperXY.position.z = i*10;
+                        scene.add( helperXY );
+                        var helperXZ = new THREE.GridHelper( 20, 10 );
+                        helperXZ.setColors( 0xCCCCCC, 0xCCCCCC );
+                        helperXZ.position.y = i*10;
+                        scene.add( helperXZ );
+                }
+                camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 1000 );
 		camera.position.x = -30;
 		camera.position.y = 40;
 		camera.position.z = 30;
@@ -73,7 +130,7 @@ $(function () {
 
 		renderer = new THREE.CanvasRenderer();
 		renderer.setClearColor(new THREE.Color(0xEEEEEE));
-		renderer.setSize( window.innerWidth/1.5, window.innerHeight/1.5 );
+		renderer.setSize( window.innerWidth/1.5, window.innerHeight );
 
 		container = document.getElementById( 'output' );
 		container.appendChild( renderer.domElement );
@@ -93,14 +150,13 @@ $(function () {
 		controls.keys = [ 65, 83, 68 ];
 
 		controls.addEventListener( 'change', render );
-			
 		window.addEventListener( 'resize', onWindowResize, false );
         }
 
 	function onWindowResize() {
-	        camera.aspect = (window.innerWidth) / (window.innerHeight);
+	        camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
-		renderer.setSize( window.innerWidth/1.5, window.innerHeight/1.5 );
+		renderer.setSize( window.innerWidth/1.5, window.innerHeight );
 		render();
 	}
 
@@ -110,6 +166,7 @@ $(function () {
 	}
 
 	function render() {
+                camera.updateMatrixWorld();
 	        renderer.render( scene, camera );
 	}
 });
