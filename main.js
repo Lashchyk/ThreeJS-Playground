@@ -62,7 +62,7 @@ $(function () {
                         scene.remove(found);
                 }
                 if (point) {
-                        point.material.color.setRGB(119, 119, 255);
+                        point.material.color.setRGB(0.46, 0.46, 1);
                 }
 
 		var components = $("#findNearestTo").val().split('|');
@@ -79,7 +79,7 @@ $(function () {
                                         if (scene.children[i] instanceof THREE.Sprite) {
                                                 point = scene.children[i];
                                                 if (point.position.x == data[0] && point.position.y == data[1] && point.position.z == data[2]) {
-                                                        point.material.color.setRGB(255,0,0);
+                                                        point.material.color.setRGB(1,0,0);
                                                         meshMaterial = new THREE.MeshBasicMaterial({ color: 0xFF00FF, wireframe: true });
                                                         var d = Math.sqrt(Math.pow(data[0] - vec[0], 2) + Math.pow(data[1] - vec[1], 2) + Math.pow(data[2] - vec[2], 2));
                                                         sphere = new THREE.Mesh( new THREE.SphereGeometry( d ), meshMaterial );
